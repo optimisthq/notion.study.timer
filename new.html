@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JEE Study Tracker</title>
+<style>
+/* Modern Dark Mode Scheme Integration */
+:root {
+  color-scheme: dark;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+
+/* Global Font Override to match Notion's Serif Mode */
+body, input, textarea, button, select, table, th, td, span, div, h1, h3 {
+  font-family: Lyon-Text, Georgia, Cambria, "Times New Roman", Times, serif !important;
+}
+
+/* Base Body Styles */
+body{
+  background:#121212;
+  color:#e0e0e0;
+  padding:2rem;
+}
+
+/* Main Tracker Container Card */
+.tracker{
+  max-width:680px;
+  margin:0 auto;
+  background:#1e1e1e;
+  border-radius:12px;
+  padding:2rem;
+  box-shadow:0 4px 20px rgba(0,0,0,0.4);
+  border:1px solid #2d2d2d;
+}
+
+/* Header Text Adjustments */
+.header{margin-bottom:1.5rem}
+.header h1{font-size:26px;font-weight:600;color:#ffffff}
+.header p{font-size:14px;color:#a0a0a0;margin-top:4px}
+
+/* Top 3 Subject Cards Grid */
+.subjects{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:1.5rem}
+.subject-card{border:1px solid #2d2d2d;border-radius:8px;background:#252525;padding:16px;position:relative;overflow:hidden}
+.subject-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent-color)}
+
+/* Brightened accent colors for a cleaner glow against dark cards */
+.subj-phy{--accent-color:#3b82f6}
+.subj-chem{--accent-color:#10b981}
+.subj-math{--accent-color:#f59e0b}
+
+.subject-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.8px;color:#888;margin-bottom:8px}
+.subject-name{font-size:16px;font-weight:500;color:#ffffff;margin-bottom:12px}
+.subject-time{font-size:22px;font-weight:600;color:#ffffff;font-variant-numeric:tabular-nums}
+.subject-today{font-size:12px;color:#a0a0a0;margin-top:4px}
+
+/* Interactive Timer Box */
+.timer-box{border:1px solid #2d2d2d;border-radius:8px;padding:20px;margin-bottom:1.5rem;background:#181818}
+.subject-select{display:flex;gap:6px;margin-bottom:12px}
+
+/* Standard Tab Buttons */
+.seg-btn{flex:1;padding:8px 6px;border:1px solid #333;border-radius:6px;background:#252525;cursor:pointer;font-size:13px;color:#aaa;transition:all 0.15s}
+
+/* High Contrast Active States for Subject Tabs */
+.seg-btn.active{background:#1e3a8a;color:#93c5fd;border-color:#3b82f6}
+.seg-btn.active-chem{background:#064e3b;color:#a7f3d0;border-color:#10b981}
+.seg-btn.active-math{background:#78350f;color:#fde68a;border-color:#f59e0b}
+
+.big-timer{text-align:center;padding:20px 0;font-size:52px;font-weight:600;font-variant-numeric:tabular-nums;color:#ffffff}
+.timer-status{font-size:14px;color:#a0a0a0;text-align:center;margin-bottom:12px}
+
+/* Text Input Styling */
+.note-input{width:100%;border:1px solid #333;border-radius:6px;padding:10px;font-size:14px;background:#252525;color:#ffffff;margin-bottom:10px;resize:none}
+.note-input:focus{outline:none;border-color:#3b82f6}
+
+/* Active and Control Buttons */
+.ctrl-row{display:grid;grid-template-columns:1fr 1fr 1fr 0.6fr;gap:8px}
+.ctrl-btn{padding:10px;border-radius:6px;border:1px solid #333;background:#252525;cursor:pointer;font-size:13px;color:#e0e0e0;transition:all 0.15s;display:flex;align-items:center;justify-content:center;gap:6px}
+.ctrl-btn:hover:not(:disabled){background:#333}
+.ctrl-btn.start{border-color:#3b82f6;color:#3b82f6;font-weight:500}
+.ctrl-btn.stop-log{background:#2563eb;color:#fff;border-color:#2563eb;font-weight:500}
+.ctrl-btn.stop-log:hover{background:#1d4ed8}
+.ctrl-btn:disabled{opacity:0.3;cursor:not-allowed;background:#1a1a1a;border-color:#2d2d2d;color:#666}
+
+/* Bottom Metrics / Stats Grid */
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:1.5rem}
+.stat-card{background:#252525;border-radius:8px;padding:16px;border:1px solid #2d2d2d}
+.stat-label{font-size:11px;color:#a0a0a0;margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px}
+.stat-val{font-size:24px;font-weight:600;color:#ffffff;font-variant-numeric:tabular-nums}
+
+/* Analytics Progress Bars */
+.bar-chart{margin-bottom:1.5rem}
+.bar-row{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.bar-label{font-size:13px;color:#a0a0a0;width:40px;font-weight:500}
+.bar-track{flex:1;height:10px;background:#2d2d2d;border-radius:5px;overflow:hidden}
+.bar-fill{height:100%;border-radius:5px;transition:width 0.4s ease}
+.bar-fill-phy{background:#3b82f6}
+.bar-fill-chem{background:#10b981}
+.bar-fill-math{background:#f59e0b}
+.bar-val{font-size:13px;color:#a0a0a0;width:40px;text-align:right}
+
+/* Log Entries Table Area */
+.log-section{border-top:1px solid #2d2d2d;padding-top:1.5rem}
+.log-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.log-header h3{font-size:16px;font-weight:600;color:#ffffff}
+.export-btn{padding:6px 12px;border:1px solid #333;border-radius:6px;background:#252525;cursor:pointer;font-size:13px;color:#e0e0e0;display:flex;align-items:center;gap:6px}
+.export-btn:hover{background:#333}
+.log-empty{text-align:center;padding:32px;color:#777;font-size:14px}
+.log-table{width:100%;border-collapse:collapse;font-size:13px}
+.log-table th{text-align:left;font-weight:600;font-size:11px;color:#a0a0a0;text-transform:uppercase;letter-spacing:0.6px;padding:0 8px 12px;border-bottom:1px solid #2d2d2d}
+.log-table td{padding:12px 8px;border-bottom:1px solid #2d2d2d;color:#e0e0e0}
+
+/* Forces the JavaScript generated inline styles for note column to stay bright */
+.log-table tr td:last-child {color:#a0a0a0 !important;}
+.log-table tr:last-child td{border-bottom:none}
+
+/* Subject Badges/Pills inside Log Table */
+.subj-pill{display:inline-block;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600}
+.pill-phy{background:#1e3a8a;color:#93c5fd}
+.pill-chem{background:#064e3b;color:#a7f3d0}
+.pill-math{background:#78350f;color:#fde68a}
+
+/* Notion Notice Footer Section */
+.notion-note{margin-top:1.5rem;padding:16px;background:#181818;border-radius:8px;font-size:13px;color:#a0a0a0;line-height:1.6;border:1px solid #2d2d2d}
+.notion-note strong{color:#ffffff;font-weight:600}
+.notion-note code{background:#252525;border:1px solid #333;padding:2px 6px;border-radius:4px;font-size:12px;font-family:monospace;color:#f43f5e}
+
+/* Local Backup Database Styles Container */
+.backup-section {
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #2d2d2d;
+}
+.backup-section h3 {
+  font-size: 16px;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 4px;
+}
+.backup-desc {
+  font-size: 12px;
+  color: #777;
+  margin-bottom: 12px;
+}
+</style>
+</head>
+<body>
+
+<div class="tracker">
+  <div class="header">
+    <h1>Study tracker</h1>
+    <p id="dateStr">Loading…</p>
+  </div>
+
+  <div class="subjects">
+    <div class="subject-card subj-phy">
+      <div class="subject-label">Subject 1</div>
+      <div class="subject-name">Physics</div>
+      <div class="subject-time" id="total-phy">0h 00m</div>
+      <div class="subject-today" id="today-phy">Today: 0h 00m</div>
+    </div>
+    <div class="subject-card subj-chem">
+      <div class="subject-label">Subject 2</div>
+      <div class="subject-name">Chemistry</div>
+      <div class="subject-time" id="total-chem">0h 00m</div>
+      <div class="subject-today" id="today-chem">Today: 0h 00m</div>
+    </div>
+    <div class="subject-card subj-math">
+      <div class="subject-label">Subject 3</div>
+      <div class="subject-name">Maths</div>
+      <div class="subject-time" id="total-math">0h 00m</div>
+      <div class="subject-today" id="today-math">Today: 0h 00m</div>
+    </div>
+  </div>
+
+  <div class="timer-box">
+    <div class="subject-select">
+      <button class="seg-btn active" id="seg-phy" onclick="selectSubj('phy')">⚡ Physics</button>
+      <button class="seg-btn" id="seg-chem" onclick="selectSubj('chem')">⚗️ Chemistry</button>
+      <button class="seg-btn" id="seg-math" onclick="selectSubj('math')">∑ Maths</button>
+    </div>
+    <div class="big-timer" id="bigTimer">0:00:00</div>
+    <div class="timer-status" id="timerStatus">Select subject and start</div>
+    <textarea class="note-input" id="noteInput" rows="2" placeholder="Session note (optional) — e.g. 'Kinematics + NLM PYQs'"></textarea>
+    <div class="ctrl-row">
+      <button class="ctrl-btn start" id="btnStart" onclick="startTimer()">▶ Start</button>
+      <button class="ctrl-btn" id="btnPause" onclick="pauseTimer()" disabled>⏸ Pause</button>
+      <button class="ctrl-btn stop-log" id="btnStop" onclick="stopTimer()" disabled>✓ Log</button>
+      <button class="ctrl-btn" id="btnReset" onclick="resetTimer()" disabled>↻</button>
+      <button id="fullscreenBtn" onclick="toggleFullscreen()" style="background-color: #4a5568; color: white; border: none; padding: 8px 12px; margin-top: 10px; margin-left: 5px; cursor: pointer; border-radius: 4px;">
+       Fullscreen
+      </button>
+    </div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-label">Sessions</div>
+      <div class="stat-val" id="statSessions">0</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Total hours</div>
+      <div class="stat-val" id="statHours">0h 0m</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">Today</div>
+      <div class="stat-val" id="statToday">0h 0m</div>
+    </div>
+  </div>
+
+  <div class="bar-chart">
+    <div class="bar-row">
+      <span class="bar-label">PHY</span>
+      <div class="bar-track"><div class="bar-fill bar-fill-phy" id="bar-phy" style="width:0%"></div></div>
+      <span class="bar-val" id="barval-phy">0h</span>
+    </div>
+    <div class="bar-row">
+      <span class="bar-label">CHEM</span>
+      <div class="bar-track"><div class="bar-fill bar-fill-chem" id="bar-chem" style="width:0%"></div></div>
+      <span class="bar-val" id="barval-chem">0h</span>
+    </div>
+    <div class="bar-row">
+      <span class="bar-label">MATH</span>
+      <div class="bar-track"><div class="bar-fill bar-fill-math" id="bar-math" style="width:0%"></div></div>
+      <span class="bar-val" id="barval-math">0h</span>
+    </div>
+  </div>
+
+  <div class="log-section">
+    <div class="log-header">
+      <h3>Session log</h3>
+      <button class="export-btn" onclick="exportCSV()">⬇ Export CSV</button>
+      <div id="clearHistoryWrapper" style="margin-top: 10px; display: inline-block;">
+        <button id="resetLogsBtn" onclick="showInlineConfirm()" style="background-color: #e63946; color: white; border: none; padding: 8px 12px; cursor: pointer; border-radius: 4px;">
+          🗑️ Clear Local History
+        </button>
+        
+        <span id="inlineConfirmBlock" style="display: none; margin-left: 8px; font-family: serif; font-size: 0.9rem; background: #fee2e2; padding: 6px 10px; border-radius: 4px; border: 1px solid #fca5a5;">
+          <span style="color: #991b1b; margin-right: 6px; font-weight: bold;">Are you sure?</span>
+          <button onclick="executeSecureClear()" style="background: #dc2626; color: white; border: none; padding: 2px 8px; font-size: 0.8rem; border-radius: 3px; cursor: pointer;">Yes</button>
+          <button onclick="hideInlineConfirm()" style="background: #64748b; color: white; border: none; padding: 2px 8px; font-size: 0.8rem; border-radius: 3px; cursor: pointer; margin-left: 2px;">No</button>
+        </span>
+      </div>
+    </div>
+    <div id="logBody"><div class="log-empty">No sessions logged yet. Start a timer above.</div></div>
+  </div>
+
+  <div class="backup-section">
+    <h3>📦 Isolated Sandbox Backup History</h3>
+    <div class="backup-desc">These sessions are saved inside a low-level browser database (IndexedDB) to survive aggressive sandbox clearances.</div>
+    <div id="backupLogBody"><div class="log-empty">No backup database records found.</div></div>
+  </div>
+
+  <div class="notion-note">
+    <strong>Import to Notion →</strong> Click <strong>Export CSV</strong> to download your session log. In Notion, open your database, click <code>⋯ → Merge with CSV</code> to append all rows. Columns: Date, Subject, Duration (min), Duration (h), Note, Start time, End time.
+  </div>
+
+  <div style="text-align: center; margin-top: 30px;">
+    <button onclick="toggleWebhookPanel()" style="background: none; border: none; color: #a0aec0; font-size: 0.8rem; cursor: pointer; text-decoration: underline;">
+      ⚙️ Configure Webhook Link
+    </button>
+  </div>
+
+  <div id="webhookConfigPanel" style="display: none; margin: 15px auto; padding: 15px; max-width: 500px; background: #252525; border: 1px solid #333; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,0.5);">
+    <h4 style="margin-top: 0; font-family: serif; color: #ffffff; margin-bottom: 10px;">Link Fresh Make.com Webhook</h4>
+    <input type="text" id="secureWebhookInput" placeholder="https://hook.eu1.make.com/..." style="width: 100%; padding: 8px; margin-bottom: 10px; border: 1px solid #333; border-radius: 4px; box-sizing: border-box; background: #181818; color: #fff;">
+    <br>
+    <button onclick="saveWebhookFromInput()" style="background: #48bb78; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-weight: bold;">Save Link</button>
+    <button onclick="toggleWebhookPanel()" style="background: #718096; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; margin-left: 5px;">Cancel</button>
+  </div>
+</div>
+
+<script>
+const SNAMES={phy:'Physics',chem:'Chemistry',math:'Maths'};
+let selSubj='phy';
+let timerEl=null;
+let elapsed=0;
+let startTs=null;
+let paused=false;
+let sessions=[];
+
+// IndexedDB Core Reference Variable Global Control
+let db = null;
+let secureWebhookCachedValue = "";
+
+function fmt(ms){
+  const s=Math.floor(ms/1000);
+  const h=Math.floor(s/3600);
+  const m=Math.floor((s%3600)/60);
+  const ss=s%60;
+  return h+':'+(m<10?'0':'')+m+':'+(ss<10?'0':'')+ss;
+}
+
+function fmtHm(ms){
+  const tot=Math.floor(ms/60000);
+  return Math.floor(tot/60)+'h '+(tot%60)+'m';
+}
+
+function fmtHmLabel(ms){
+  const h=(ms/3600000);
+  return h<1?Math.round(ms/60000)+'m':h.toFixed(1)+'h';
+}
+
+function dateKey(){
+  return new Date().toISOString().slice(0,10);
+}
+
+// Initialize System Databases and Storage Backups
+function init(){
+  document.getElementById('dateStr').textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  
+  // Step 1: Open Secure IndexedDB Local Architecture Engine
+  const dbRequest = indexedDB.open("StudyTrackerDB", 1);
+
+  dbRequest.onupgradeneeded = function(e) {
+    const databaseInstance = e.target.result;
+    if (!databaseInstance.objectStoreNames.contains("settings")) {
+      databaseInstance.createObjectStore("settings");
+    }
+    if (!databaseInstance.objectStoreNames.contains("sessions")) {
+      databaseInstance.createObjectStore("sessions", { keyPath: "id", autoIncrement: true });
+    }
+  };
+
+  dbRequest.onsuccess = function(e) {
+    db = e.target.result;
+    console.log("IndexedDB engine loaded successfully.");
+    
+    // Load historical session cache from Local Storage array as fallback logic
+    const saved = localStorage.getItem('jeeStudySessions');
+    if(saved){
+      try{ sessions = JSON.parse(saved); } catch(e){ sessions = []; }
+    }
+    
+    loadWebhookFromDB();
+    updateAll();
+  };
+
+  dbRequest.onerror = function(e) {
+    console.error("IndexedDB failed to initialize. Falling back onto localStorage.", e.target.error);
+    const saved = localStorage.getItem('jeeStudySessions');
+    if(saved){
+      try{ sessions = JSON.parse(saved); } catch(e){ sessions = []; }
+    }
+    updateAll();
+  };
+}
+
+function selectSubj(s){
+  selSubj=s;
+  ['phy','chem','math'].forEach(x=>{
+    const btn=document.getElementById('seg-'+x);
+    btn.className='seg-btn';
+    if(x===s) btn.className+=' active'+(x==='phy'?'':'-'+x);
+  });
+}
+
+function totalMs(subj,dateFilter){
+  return sessions.filter(s=>s.subj===subj&&(!dateFilter||s.date===dateFilter)).reduce((a,s)=>a+s.ms,0);
+}
+
+function updateAll(){
+  const today=dateKey();
+  ['phy','chem','math'].forEach(s=>{
+    document.getElementById('total-'+s).textContent=fmtHm(totalMs(s));
+    document.getElementById('today-'+s).textContent='Today: '+fmtHm(totalMs(s,today));
+  });
+  const totAll=sessions.reduce((a,s)=>a+s.ms,0);
+  const todAll=sessions.filter(s=>s.date===today).reduce((a,s)=>a+s.ms,0);
+  document.getElementById('statSessions').textContent=sessions.length;
+  document.getElementById('statHours').textContent=fmtHm(totAll);
+  document.getElementById('statToday').textContent=fmtHm(todAll);
+  const maxMs=Math.max(1,...['phy','chem','math'].map(s=>totalMs(s)));
+  ['phy','chem','math'].forEach(s=>{
+    const ms=totalMs(s);
+    document.getElementById('bar-'+s).style.width=Math.round(ms/maxMs*100)+'%';
+    document.getElementById('barval-'+s).textContent=fmtHmLabel(ms);
+  });
+  renderLog();
+  renderBackupLogTable();
+}
+
+function renderLog(){
+  const el=document.getElementById('logBody');
+  if(!sessions.length){
+    el.innerHTML='<div class="log-empty">No sessions logged yet. Start a timer above.</div>';
+    return;
+  }
+  const sorted=[...sessions].reverse();
+  el.innerHTML='<table class="log-table"><thead><tr><th>Date</th><th>Subject</th><th>Duration</th><th>Note</th></tr></thead><tbody>'+
+    sorted.map(s=>{
+      const pillCls='pill-'+s.subj;
+      return '<tr><td>'+s.date+'</td><td><span class="subj-pill '+pillCls+'">'+SNAMES[s.subj]+'</span></td><td>'+fmtHm(s.ms)+'</td><td style="color:#666">'+(s.note||'—')+'</td></tr>';
+    }).join('')+'</tbody></table>';
+}
+
+// Pull rows directly from low-level database store to protect layout visibility
+function renderBackupLogTable() {
+  const el = document.getElementById('backupLogBody');
+  if (!el || !db) return;
+
+  const transaction = db.transaction(["sessions"], "readonly");
+  const store = transaction.objectStore("sessions");
+  const cursorRequest = store.openCursor(null, "prev"); // Fetch reverse sorting hierarchy
+  
+  let rowsHtml = "";
+
+  cursorRequest.onsuccess = function(e) {
+    const cursor = e.target.result;
+    if (cursor) {
+      const s = cursor.value;
+      // Convert standard subject names down into matching pill indicators
+      let currentSubjKey = "phy";
+      if (s.subject === "Chemistry") currentSubjKey = "chem";
+      if (s.subject === "Maths") currentSubjKey = "math";
+      
+      const pillCls = 'pill-' + currentSubjKey;
+      rowsHtml += '<tr><td>'+s.date+'</td><td><span class="subj-pill '+pillCls+'">'+s.subject+'</span></td><td>'+fmtHm(s.duration_min * 60000)+'</td><td style="color:#666">'+(s.note||'—')+'</td></tr>';
+      cursor.continue();
+    } else {
+      if (rowsHtml !== "") {
+        el.innerHTML = '<table class="log-table"><thead><tr><th>Date</th><th>Subject</th><th>Duration</th><th>Note</th></tr></thead><tbody>' + rowsHtml + '</tbody></table>';
+      } else {
+        el.innerHTML = '<div class="log-empty">No backup database records found.</div>';
+      }
+    }
+  };
+}
+
+function startTimer(){
+  startTs=Date.now()-elapsed;
+  paused=false;
+  document.getElementById('btnStart').disabled=true;
+  document.getElementById('btnPause').disabled=false;
+  document.getElementById('btnStop').disabled=false;
+  document.getElementById('btnReset').disabled=false;
+  document.getElementById('timerStatus').textContent='Recording '+SNAMES[selSubj]+'…';
+  if(timerEl) clearInterval(timerEl);
+  timerEl=setInterval(()=>{
+    elapsed=Date.now()-startTs;
+    document.getElementById('bigTimer').textContent=fmt(elapsed);
+  },100);
+}
+
+function pauseTimer(){
+  if(paused){
+    startTs=Date.now()-elapsed;
+    paused=false;
+    document.getElementById('btnPause').textContent='⏸ Pause';
+    document.getElementById('timerStatus').textContent='Recording '+SNAMES[selSubj]+'…';
+    timerEl=setInterval(()=>{
+      elapsed=Date.now()-startTs;
+      document.getElementById('bigTimer').textContent=fmt(elapsed);
+    },100);
+  } else {
+    clearInterval(timerEl);
+    paused=true;
+    document.getElementById('btnPause').textContent='▶ Resume';
+    document.getElementById('timerStatus').textContent='Paused';
+  }
+}
+
+function resetTimer(){
+  clearInterval(timerEl);
+  elapsed=0;
+  paused=false;
+  document.getElementById('bigTimer').textContent='0:00:00';
+  document.getElementById('timerStatus').textContent='Select subject and start';
+  document.getElementById('noteInput').value='';
+  document.getElementById('btnStart').disabled=false;
+  document.getElementById('btnPause').disabled=true;
+  document.getElementById('btnStop').disabled=true;
+  document.getElementById('btnReset').disabled=true;
+  document.getElementById('btnPause').textContent='⏸ Pause';
+}
+
+// Fetch the secure Webhook configuration data value dynamically
+function getSecureWebhook() {
+  return secureWebhookCachedValue || localStorage.getItem('userMakeWebhook');
+}
+
+function loadWebhookFromDB() {
+  if (!db) return;
+  const transaction = db.transaction(["settings"], "readonly");
+  const store = transaction.objectStore("settings");
+  const request = store.get("userMakeWebhook");
+
+  request.onsuccess = function() {
+    if (request.result) {
+      secureWebhookCachedValue = request.result;
+      document.getElementById('secureWebhookInput').value = request.result;
+    }
+  };
+}
+
+// Save Webhook variables straight to IndexedDB architecture
+function saveWebhookFromInput() {
+  const urlInput = document.getElementById('secureWebhookInput').value.trim();
+  if (urlInput) {
+    secureWebhookCachedValue = urlInput;
+    localStorage.setItem('userMakeWebhook', urlInput);
+    
+    if (db) {
+      const transaction = db.transaction(["settings"], "readwrite");
+      const store = transaction.objectStore("settings");
+      store.put(urlInput, "userMakeWebhook");
+    }
+
+    document.getElementById('webhookConfigPanel').style.display = 'none';
+    const statusEl = document.getElementById('timerStatus');
+    if (statusEl) {
+      statusEl.textContent = 'Webhook linked securely! 🎉';
+      setTimeout(() => { statusEl.textContent = 'Select subject and start'; }, 2500);
+    }
+  } else {
+    alert("Please paste a valid URL.");
+  }
+}
+
+function toggleWebhookPanel() {
+  const panel = document.getElementById('webhookConfigPanel');
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+}
+
+function stopTimer() {
+  // 1. Calculate all values FIRST 
+  const note = document.getElementById('noteInput').value.trim();
+  const now = new Date();
+  const endTime = now.toTimeString().slice(0, 5);
+  const startTime = new Date(now - elapsed).toTimeString().slice(0, 5);
+  
+  const payloadData = {
+    date: dateKey(),
+    subject: SNAMES[selSubj],
+    duration_min: Math.round(elapsed / 60000),
+    note: note,
+    startTime: startTime,
+    endTime: endTime
+  };
+
+  // 2. Fetch the secure webhook endpoint parameter
+  const secureWebhookUrl = getSecureWebhook();
+
+  if (secureWebhookUrl) {
+    fetch(secureWebhookUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payloadData)
+    }).catch(err => console.error("Webhook error:", err));
+  } else {
+    console.warn("Data sync skipped: No webhook URL provided by the user.");
+  }
+
+  // 3. Backup Step: Save elements inside browser Local Storage array list
+  sessions.push({subj:selSubj,ms:elapsed,date:dateKey(),note,startTime,endTime});
+  try {
+    localStorage.setItem('jeeStudySessions', JSON.stringify(sessions));
+  } catch(e) {
+    console.error('Storage failed', e);
+  }
+  
+  // 4. Secure Core Step: Append item straight into IndexedDB transactional layer
+  if (db) {
+    const sessionTx = db.transaction(["sessions"], "readwrite");
+    const sessionStore = sessionTx.objectStore("sessions");
+    sessionStore.add(payloadData);
+    sessionTx.oncomplete = function() {
+      updateAll();
+    };
+  } else {
+    updateAll();
+  }
+  
+  resetTimer();
+  document.getElementById('timerStatus').textContent = 'Session saved ✓';
+  setTimeout(() => {
+    document.getElementById('timerStatus').textContent = 'Select subject and start';
+  }, 2000);
+}
+
+function showInlineConfirm() {
+  document.getElementById('inlineConfirmBlock').style.display = 'inline-block';
+  document.getElementById('resetLogsBtn').style.display = 'none';
+}
+
+function hideInlineConfirm() {
+  document.getElementById('inlineConfirmBlock').style.display = 'none';
+  document.getElementById('resetLogsBtn').style.display = 'inline-block';
+}
+
+// System cache purge completely independent of sandboxed windows
+function executeSecureClear() {
+  sessions = [];
+  localStorage.removeItem('jeeStudySessions');
+  
+  // Completely wipe the table stores inside IndexedDB database framework files
+  if (db) {
+    const sessionTx = db.transaction(["sessions"], "readwrite");
+    const sessionStore = sessionTx.objectStore("sessions");
+    const clearRequest = sessionStore.clear();
+    
+    sessionTx.oncomplete = function() {
+      console.log("Database entries purged successfully.");
+      updateAll();
+    };
+  } else {
+    updateAll();
+  }
+  
+  hideInlineConfirm();
+  
+  const statusEl = document.getElementById('timerStatus');
+  if (statusEl) {
+    statusEl.textContent = 'Local logs cleared!';
+    setTimeout(() => {
+      statusEl.textContent = 'Select subject and start';
+    }, 2000);
+  }
+}
+
+function toggleFullscreen() {
+  const btn = document.getElementById('fullscreenBtn');
+  
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen()
+      .then(() => {
+        btn.innerHTML = "🔍 Minimize Screen";
+        btn.style.backgroundColor = "#718096";
+      })
+      .catch((err) => {
+        console.error(`Error attempting to enable fullscreen: ${err.message}`);
+      });
+  } else {
+    document.exitFullscreen();
+    btn.innerHTML = "Fullscreen";
+    btn.style.backgroundColor = "#4a5568";
+  }
+}
+
+document.addEventListener('fullscreenchange', () => {
+  const btn = document.getElementById('fullscreenBtn');
+  if (!document.fullscreenElement) {
+    btn.innerHTML = "Fullscreen";
+    btn.style.backgroundColor = "#4a5568";
+  }
+});
+
+function exportCSV(){
+  if(!sessions.length){
+    alert('No sessions to export yet.');
+    return;
+  }
+  const hdr='Date,Subject,Duration (min),Duration (h),Note,Start time,End time\n';
+  const rows=sessions.map(s=>{
+    const min=Math.round(s.ms/60000);
+    const h=(s.ms/3600000).toFixed(2);
+    const note=(s.note||'').replace(/"/g,'""');
+    return s.date+','+SNAMES[s.subj]+','+min+','+h+',"'+note+'",'+s.startTime+','+s.endTime;
+  }).join('\n');
+  const csv=hdr+rows;
+  const blob=new Blob([csv],{type:'text/csv;charset=utf-8;'});
+  const link=document.createElement('a');
+  const url=URL.createObjectURL(blob);
+  link.setAttribute('href',url);
+  link.setAttribute('download','jee_study_log.csv');
+  link.style.visibility='hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+init();
+</script>
+
+</body>
+</html>
