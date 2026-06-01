@@ -94,3 +94,5 @@ The real-time data pipeline is now fully automated! Every session saved on the f
 
 
 Deployed website url : [Timer](https://optimisthq.github.io/notion.study.timer/study_timer.html)
+
+version 2 : [HERE!](https://optimisthq.github.io/notion.study.timer/new.html)
